@@ -80,10 +80,11 @@ namespace AzAppServiceQuickFix
         {
             WriteSection("Applying a possible scale up/down fix");
             PricingTier _default = appServicePlan.PricingTier;
-            Log("Scaling Up App Service Plan");
-            appServicePlan.Update().WithPricingTier(PricingTier.StandardS3).Apply();
+            PricingTier _next = GetNextTier(_default);
+            Log("Scaling Up App Service Plan: " + _next.ToString());
+            appServicePlan.Update().WithPricingTier(_next).Apply();
             LetsWaitALittle();
-            Log("Scaling Down App Service Plan");
+            Log("Scaling Down App Service Plan: " + _default.ToString());
             appServicePlan.Update().WithPricingTier(_default).Apply();
             LetsWaitALittle();
         }
@@ -97,6 +98,28 @@ namespace AzAppServiceQuickFix
             Log("Starting Web App");
             app.Start();
             LetsWaitALittle();
+        }
+
+        public static PricingTier GetNextTier(PricingTier tier)
+        {
+            if (tier.Equals(PricingTier.FreeF1) || tier.Equals(PricingTier.SharedD1))
+            {
+                return PricingTier.StandardS1;
+            } else if (tier.Equals(PricingTier.BasicB1) || tier.Equals(PricingTier.BasicB2))
+            {
+                return PricingTier.BasicB3;
+            } else if (tier.Equals(PricingTier.StandardS1) || tier.Equals(PricingTier.StandardS2))
+            {
+                return PricingTier.StandardS3;
+            } else if (tier.Equals(PricingTier.PremiumP1) || tier.Equals(PricingTier.PremiumP2))
+            {
+                return PricingTier.PremiumP3;
+            } else if (tier.Equals(PricingTier.PremiumP1v2) || tier.Equals(PricingTier.PremiumP2v2))
+            {
+                return PricingTier.PremiumP3v2;
+            } else {
+                return PricingTier.StandardS3;
+            }
         }
 
         public static void Log(string msg)
